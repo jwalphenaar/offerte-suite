@@ -13,6 +13,7 @@ Zelfstandige offerte-app voor je eigen aanvragen, los van de bestaande codebase.
 ## Functionaliteit
 
 - Offerte-aanvragen bijhouden met bedrijf, contact, bron, type aanvraag en notities
+- Offertebedrag opslaan per aanvraag
 - Statusflow voor nieuw, call, offerte verstuurd, wachten op klant, opvolgen, gewonnen, verloren
 - Follow-up datum en dashboard met openstaande acties
 - Offertetekst en transcriptie opslaan

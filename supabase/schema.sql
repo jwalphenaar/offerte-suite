@@ -12,6 +12,7 @@ create table if not exists public.quote_requests (
   call_date timestamptz,
   transcript text,
   quote_date date,
+  quote_amount numeric(12,2),
   quote_text text,
   proposal_document_name text,
   proposal_document_path text,
@@ -27,6 +28,9 @@ create table if not exists public.quote_requests (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.quote_requests
+add column if not exists quote_amount numeric(12,2);
 
 create table if not exists public.gmail_events (
   id uuid primary key default gen_random_uuid(),

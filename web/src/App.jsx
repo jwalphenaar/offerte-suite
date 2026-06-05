@@ -23,6 +23,7 @@ const emptyDraft = () => ({
   call_date: '',
   transcript: '',
   quote_date: '',
+  quote_amount: '',
   quote_text: '',
   proposal_document_name: '',
   proposal_document_path: '',
@@ -43,6 +44,17 @@ function formatDate(value, options = {}) {
   return Number.isNaN(date.getTime())
     ? '—'
     : date.toLocaleDateString('nl-NL', options)
+}
+
+function formatCurrency(value) {
+  if (value === null || value === undefined || value === '') return '—'
+  const amount = Number(value)
+  if (Number.isNaN(amount)) return '—'
+  return new Intl.NumberFormat('nl-NL', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 2,
+  }).format(amount)
 }
 
 function isOpenStatus(status) {
@@ -126,6 +138,7 @@ export default function App() {
       ...item,
       request_date: item.request_date || '',
       quote_date: item.quote_date || '',
+      quote_amount: item.quote_amount ?? '',
       call_date: item.call_date ? item.call_date.slice(0, 16) : '',
       gmail_last_reply_at: item.gmail_last_reply_at ? item.gmail_last_reply_at.slice(0, 16) : '',
       follow_up_date: item.follow_up_date || '',
@@ -163,6 +176,7 @@ export default function App() {
       request_type: draft.request_type.trim(),
       request_source: draft.request_source.trim(),
       transcript: draft.transcript.trim(),
+      quote_amount: draft.quote_amount === '' ? null : Number(draft.quote_amount),
       quote_text: draft.quote_text.trim(),
       proposal_document_name: draft.proposal_document_name.trim(),
       proposal_document_path: draft.proposal_document_path.trim(),
@@ -362,6 +376,7 @@ export default function App() {
               <div className="request-item-meta">
                 <span>{item.request_type || 'Geen type'}</span>
                 <span>{item.request_source || 'Geen bron'}</span>
+                <span>{formatCurrency(item.quote_amount)}</span>
               </div>
               <div className="request-item-foot">
                 <span>Aanvraag {formatDate(item.request_date)}</span>
@@ -491,6 +506,20 @@ export default function App() {
                   onChange={(event) => setDraft({ ...draft, quote_date: event.target.value })}
                 />
               </label>
+              <label className="field-group">
+                <span>Offerte bedrag</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="field"
+                  placeholder="2500"
+                  value={draft.quote_amount}
+                  onChange={(event) => setDraft({ ...draft, quote_amount: event.target.value })}
+                />
+              </label>
+            </div>
+            <div className="double-grid">
               <label className="field-group">
                 <span>Volgende opvolgdatum</span>
                 <input
