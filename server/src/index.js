@@ -5,13 +5,14 @@ import { createClient } from '@supabase/supabase-js'
 
 const port = Number(process.env.PORT || 8787)
 const supabaseUrl = process.env.SUPABASE_URL
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabaseServiceKey =
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error('SUPABASE_URL en SUPABASE_SERVICE_ROLE_KEY zijn verplicht.')
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('SUPABASE_URL en SUPABASE_SERVICE_KEY zijn verplicht.')
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
 const app = express()
 
 app.use(cors())

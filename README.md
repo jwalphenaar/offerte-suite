@@ -60,6 +60,7 @@ npm run dev:server
 - Root directory: `offerte-suite`
 - Start command: `npm --workspace server run start`
 - Environment variables: dezelfde als in `server/.env.example`
+- Vereist minimaal `SUPABASE_URL` en `SUPABASE_SERVICE_KEY`
 
 ## Gmail integratie
 
