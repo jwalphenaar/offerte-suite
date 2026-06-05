@@ -80,7 +80,7 @@ export default function App() {
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [draft, setDraft] = useState(emptyDraft())
-  const [viewMode, setViewMode] = useState('dossier')
+  const [viewMode, setViewMode] = useState('overview')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
@@ -311,6 +311,28 @@ export default function App() {
     return matchesSearch && matchesStatus
   })
 
+  const overviewItems = [...filteredItems].sort((left, right) => {
+    const leftOpen = isOpenStatus(left.status)
+    const rightOpen = isOpenStatus(right.status)
+
+    if (leftOpen !== rightOpen) return leftOpen ? -1 : 1
+
+    const leftUrgency = getUrgency(left)
+    const rightUrgency = getUrgency(right)
+    const urgencyWeight = { overdue: 0, soon: 1, planned: 2, none: 3 }
+    if (urgencyWeight[leftUrgency] !== urgencyWeight[rightUrgency]) {
+      return urgencyWeight[leftUrgency] - urgencyWeight[rightUrgency]
+    }
+
+    const leftFollowUp = left.follow_up_date ? new Date(left.follow_up_date).getTime() : Number.POSITIVE_INFINITY
+    const rightFollowUp = right.follow_up_date ? new Date(right.follow_up_date).getTime() : Number.POSITIVE_INFINITY
+    if (leftFollowUp !== rightFollowUp) return leftFollowUp - rightFollowUp
+
+    const leftUpdated = left.updated_at ? new Date(left.updated_at).getTime() : 0
+    const rightUpdated = right.updated_at ? new Date(right.updated_at).getTime() : 0
+    return rightUpdated - leftUpdated
+  })
+
   const openItems = items.filter((item) => isOpenStatus(item.status))
   const followUpItems = openItems.filter((item) => getUrgency(item) === 'overdue' || getUrgency(item) === 'soon')
   const sentQuotes = items.filter((item) => ['offerte_verstuurd', 'wacht_op_klant', 'opvolgen'].includes(item.status))
@@ -405,7 +427,7 @@ export default function App() {
             <div className="eyebrow">{viewMode === 'overview' ? 'Overzichtspagina' : 'Offertedossier'}</div>
             <h2>
               {viewMode === 'overview'
-                ? `${filteredItems.length} offertes in beeld`
+                ? `${overviewItems.length} offertes en komende acties`
                 : selectedId ? draft.company_name || 'Nieuwe aanvraag' : 'Nieuwe aanvraag'}
             </h2>
           </div>
@@ -460,7 +482,7 @@ export default function App() {
 
         {viewMode === 'overview' ? (
           <section className="overview-grid">
-            {filteredItems.map((item) => (
+            {overviewItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
@@ -481,7 +503,7 @@ export default function App() {
                   {item.next_action || item.quote_text || item.notes || 'Nog geen verdere inhoud toegevoegd.'}
                 </div>
                 <div className="overview-footer">
-                  <span>Aanvraag {formatDate(item.request_date)}</span>
+                  <span>{item.next_action || 'Geen actie gepland'}</span>
                   <span>Opvolgen {formatDate(item.follow_up_date)}</span>
                 </div>
               </button>
