@@ -1,0 +1,8 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm install && npm run build:server"
+
+[deploy]
+startCommand = "npm --workspace server run start"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

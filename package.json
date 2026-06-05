@@ -1,0 +1,16 @@
+{
+  "name": "offerte-suite",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "web",
+    "server"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace web run dev",
+    "dev:server": "npm --workspace server run dev",
+    "build:web": "npm --workspace web run build",
+    "build:server": "npm --workspace server run build",
+    "build": "npm run build:web && npm run build:server"
+  }
+}
