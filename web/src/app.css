@@ -218,11 +218,114 @@
   align-items: center;
 }
 
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(34, 29, 26, 0.08);
+}
+
+.toggle-button {
+  border: 0;
+  background: transparent;
+  color: #7b6a5f;
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 14px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.toggle-button.active {
+  background: linear-gradient(135deg, #d06a32, #b44e28);
+  color: #fff8f2;
+}
+
 .form-grid {
   margin-top: 22px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+}
+
+.overview-grid {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.overview-card {
+  text-align: left;
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(34, 29, 26, 0.08);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 18px 50px rgba(77, 57, 33, 0.08);
+  cursor: pointer;
+}
+
+.overview-card.selected {
+  border-color: #d06a32;
+  background: #fff6ee;
+}
+
+.overview-card.overdue {
+  border-left: 5px solid #c54e3f;
+}
+
+.overview-card.soon {
+  border-left: 5px solid #dd9a33;
+}
+
+.overview-card-top,
+.overview-meta,
+.overview-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.overview-card-top strong {
+  font-size: 1.1rem;
+}
+
+.overview-card-top span,
+.overview-meta span,
+.overview-footer span {
+  font-size: 0.88rem;
+  color: #796d60;
+}
+
+.overview-amount {
+  margin-top: 16px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f1f24;
+}
+
+.overview-meta {
+  margin-top: 14px;
+}
+
+.overview-copy {
+  margin-top: 16px;
+  min-height: 84px;
+  color: #5e554d;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.overview-footer {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(34, 29, 26, 0.08);
 }
 
 .panel {
@@ -387,6 +490,10 @@
   .request-list {
     max-height: none;
   }
+
+  .overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -396,6 +503,7 @@
   }
 
   .amount-dashboard,
+  .overview-grid,
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -411,5 +519,9 @@
   .double-grid,
   .triple-grid {
     flex-direction: column;
+  }
+
+  .view-toggle {
+    width: 100%;
   }
 }

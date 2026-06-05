@@ -80,6 +80,7 @@ export default function App() {
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [draft, setDraft] = useState(emptyDraft())
+  const [viewMode, setViewMode] = useState('dossier')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
@@ -152,12 +153,14 @@ export default function App() {
   function selectItem(item) {
     setSelectedId(item.id)
     setDraft(normalizeDraft(item))
+    setViewMode('dossier')
     setMessage('')
   }
 
   function startNew() {
     setSelectedId(null)
     setDraft(emptyDraft())
+    setViewMode('dossier')
     setGmailEvents([])
     setMessage('')
   }
@@ -399,14 +402,38 @@ export default function App() {
       <main className="suite-main">
         <div className="main-header">
           <div>
-            <div className="eyebrow">Offertedossier</div>
-            <h2>{selectedId ? draft.company_name || 'Nieuwe aanvraag' : 'Nieuwe aanvraag'}</h2>
+            <div className="eyebrow">{viewMode === 'overview' ? 'Overzichtspagina' : 'Offertedossier'}</div>
+            <h2>
+              {viewMode === 'overview'
+                ? `${filteredItems.length} offertes in beeld`
+                : selectedId ? draft.company_name || 'Nieuwe aanvraag' : 'Nieuwe aanvraag'}
+            </h2>
           </div>
           <div className="header-actions">
-            {selectedId ? <button className="ghost-button" onClick={deleteItem}>Verwijderen</button> : null}
-            <button className="primary-button" onClick={saveItem} disabled={saving}>
-              {saving ? 'Opslaan...' : 'Opslaan'}
-            </button>
+            <div className="view-toggle">
+              <button
+                className={`toggle-button ${viewMode === 'dossier' ? 'active' : ''}`}
+                onClick={() => setViewMode('dossier')}
+                type="button"
+              >
+                Dossier
+              </button>
+              <button
+                className={`toggle-button ${viewMode === 'overview' ? 'active' : ''}`}
+                onClick={() => setViewMode('overview')}
+                type="button"
+              >
+                Overzicht
+              </button>
+            </div>
+            {viewMode === 'dossier' ? (
+              <>
+                {selectedId ? <button className="ghost-button" onClick={deleteItem}>Verwijderen</button> : null}
+                <button className="primary-button" onClick={saveItem} disabled={saving}>
+                  {saving ? 'Opslaan...' : 'Opslaan'}
+                </button>
+              </>
+            ) : null}
           </div>
         </div>
 
@@ -431,6 +458,36 @@ export default function App() {
           </div>
         </section>
 
+        {viewMode === 'overview' ? (
+          <section className="overview-grid">
+            {filteredItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`overview-card ${getUrgency(item)} ${selectedId === item.id ? 'selected' : ''}`}
+                onClick={() => selectItem(item)}
+              >
+                <div className="overview-card-top">
+                  <strong>{item.company_name}</strong>
+                  <span>{statusOptions.find((option) => option.value === item.status)?.label || item.status}</span>
+                </div>
+                <div className="overview-amount">{formatCurrency(item.quote_amount)}</div>
+                <div className="overview-meta">
+                  <span>{item.contact_name || 'Geen contact'}</span>
+                  <span>{item.request_type || 'Geen type'}</span>
+                  <span>{item.request_source || 'Geen bron'}</span>
+                </div>
+                <div className="overview-copy">
+                  {item.next_action || item.quote_text || item.notes || 'Nog geen verdere inhoud toegevoegd.'}
+                </div>
+                <div className="overview-footer">
+                  <span>Aanvraag {formatDate(item.request_date)}</span>
+                  <span>Opvolgen {formatDate(item.follow_up_date)}</span>
+                </div>
+              </button>
+            ))}
+          </section>
+        ) : (
         <div className="form-grid">
           <section className="panel">
             <div className="panel-title">Basis</div>
@@ -685,6 +742,7 @@ export default function App() {
             </div>
           </section>
         </div>
+        )}
       </main>
     </div>
   )
