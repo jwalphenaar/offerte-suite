@@ -155,6 +155,59 @@
   font-size: 0.85rem;
 }
 
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+
+.status-nieuw {
+  background: #f4efe8;
+  color: #6d6258;
+  border-color: rgba(109, 98, 88, 0.14);
+}
+
+.status-intake {
+  background: #eceff8;
+  color: #52648c;
+  border-color: rgba(82, 100, 140, 0.16);
+}
+
+.status-offerte_verstuurd {
+  background: #fff2e5;
+  color: #b8672e;
+  border-color: rgba(184, 103, 46, 0.16);
+}
+
+.status-wacht_op_klant {
+  background: #fff7df;
+  color: #a47617;
+  border-color: rgba(164, 118, 23, 0.18);
+}
+
+.status-opvolgen {
+  background: #ffe7e2;
+  color: #b24a3d;
+  border-color: rgba(178, 74, 61, 0.18);
+}
+
+.status-gewonnen {
+  background: #e7f5ed;
+  color: #1f7a52;
+  border-color: rgba(31, 122, 82, 0.18);
+}
+
+.status-verloren {
+  background: #fde9e7;
+  color: #b5473d;
+  border-color: rgba(181, 71, 61, 0.18);
+}
+
 .request-item-meta,
 .request-item-foot {
   margin-top: 8px;

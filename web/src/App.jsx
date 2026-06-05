@@ -76,6 +76,10 @@ function sumQuoteAmounts(items) {
   return items.reduce((total, item) => total + (Number(item.quote_amount) || 0), 0)
 }
 
+function getStatusLabel(status) {
+  return statusOptions.find((option) => option.value === status)?.label || status
+}
+
 export default function App() {
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState(null)
@@ -405,7 +409,7 @@ export default function App() {
             >
               <div className="request-item-top">
                 <strong>{item.company_name}</strong>
-                <span>{statusOptions.find((option) => option.value === item.status)?.label || item.status}</span>
+                <span className={`status-pill status-${item.status}`}>{getStatusLabel(item.status)}</span>
               </div>
               <div className="request-item-meta">
                 <span>{item.request_type || 'Geen type'}</span>
@@ -491,7 +495,7 @@ export default function App() {
               >
                 <div className="overview-card-top">
                   <strong>{item.company_name}</strong>
-                  <span>{statusOptions.find((option) => option.value === item.status)?.label || item.status}</span>
+                  <span className={`status-pill status-${item.status}`}>{getStatusLabel(item.status)}</span>
                 </div>
                 <div className="overview-amount">{formatCurrency(item.quote_amount)}</div>
                 <div className="overview-meta">
