@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import ws from 'ws'
 import { createClient } from '@supabase/supabase-js'
 
 const port = Number(process.env.PORT || 8787)
@@ -12,7 +13,11 @@ if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('SUPABASE_URL en SUPABASE_SERVICE_KEY zijn verplicht.')
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  realtime: {
+    transport: ws,
+  },
+})
 const app = express()
 
 app.use(cors())
