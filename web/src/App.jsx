@@ -72,6 +72,10 @@ function getUrgency(item) {
   return 'planned'
 }
 
+function sumQuoteAmounts(items) {
+  return items.reduce((total, item) => total + (Number(item.quote_amount) || 0), 0)
+}
+
 export default function App() {
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState(null)
@@ -308,6 +312,11 @@ export default function App() {
   const followUpItems = openItems.filter((item) => getUrgency(item) === 'overdue' || getUrgency(item) === 'soon')
   const sentQuotes = items.filter((item) => ['offerte_verstuurd', 'wacht_op_klant', 'opvolgen'].includes(item.status))
   const wonItems = items.filter((item) => item.status === 'gewonnen')
+  const lostItems = items.filter((item) => item.status === 'verloren')
+  const amountOpen = sumQuoteAmounts(openItems)
+  const amountFollowUp = sumQuoteAmounts(items.filter((item) => item.status === 'opvolgen'))
+  const amountWon = sumQuoteAmounts(wonItems)
+  const amountLost = sumQuoteAmounts(lostItems)
 
   return (
     <div className="suite-shell">
@@ -402,6 +411,25 @@ export default function App() {
         </div>
 
         {message ? <div className="feedback-banner">{message}</div> : null}
+
+        <section className="amount-dashboard">
+          <div className="amount-card">
+            <span>Open bedrag</span>
+            <strong>{formatCurrency(amountOpen)}</strong>
+          </div>
+          <div className="amount-card warn">
+            <span>Opvolgen bedrag</span>
+            <strong>{formatCurrency(amountFollowUp)}</strong>
+          </div>
+          <div className="amount-card success">
+            <span>Gewonnen bedrag</span>
+            <strong>{formatCurrency(amountWon)}</strong>
+          </div>
+          <div className="amount-card muted">
+            <span>Verloren bedrag</span>
+            <strong>{formatCurrency(amountLost)}</strong>
+          </div>
+        </section>
 
         <div className="form-grid">
           <section className="panel">

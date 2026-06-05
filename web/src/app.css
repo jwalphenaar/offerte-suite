@@ -167,6 +167,48 @@
   overflow: auto;
 }
 
+.amount-dashboard {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.amount-card {
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(34, 29, 26, 0.08);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(255, 249, 244, 0.86));
+  box-shadow: 0 18px 50px rgba(77, 57, 33, 0.08);
+}
+
+.amount-card span {
+  display: block;
+  font-size: 0.82rem;
+  color: #8a7665;
+}
+
+.amount-card strong {
+  display: block;
+  margin-top: 12px;
+  font-size: 1.8rem;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.amount-card.warn strong {
+  color: #c2642f;
+}
+
+.amount-card.success strong {
+  color: #236e54;
+}
+
+.amount-card.muted strong {
+  color: #7e6f64;
+}
+
 .main-header h2 {
   margin-top: 8px;
   font-size: 2.2rem;
@@ -353,6 +395,7 @@
     padding: 18px;
   }
 
+  .amount-dashboard,
   .form-grid {
     grid-template-columns: 1fr;
   }
