@@ -96,6 +96,33 @@ function getStatusLabel(status) {
   return statusOptions.find((option) => option.value === status)?.label || status
 }
 
+function buildCommunicationSummary(entries) {
+  return entries.reduce((summary, entry) => {
+    const current = summary[entry.quote_request_id] || { count: 0, latest: null }
+    const latestTime = current.latest?.occurred_at ? new Date(current.latest.occurred_at).getTime() : 0
+    const entryTime = entry.occurred_at ? new Date(entry.occurred_at).getTime() : 0
+
+    summary[entry.quote_request_id] = {
+      count: current.count + 1,
+      latest: entryTime >= latestTime ? entry : current.latest,
+    }
+
+    return summary
+  }, {})
+}
+
+function formatDaysSince(value) {
+  if (!value) return 'Nog geen contact'
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const date = new Date(value)
+  date.setHours(0, 0, 0, 0)
+  const diffDays = Math.max(0, Math.round((today - date) / 86400000))
+  if (diffDays === 0) return 'Vandaag contact'
+  if (diffDays === 1) return '1 dag stil'
+  return `${diffDays} dagen stil`
+}
+
 export default function App() {
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState(null)
@@ -112,6 +139,7 @@ export default function App() {
   const [statusFilter, setStatusFilter] = useState('alles')
   const [gmailEvents, setGmailEvents] = useState([])
   const [communications, setCommunications] = useState([])
+  const [communicationSummaryByQuote, setCommunicationSummaryByQuote] = useState({})
   const [communicationDraft, setCommunicationDraft] = useState(emptyCommunicationDraft())
   const [savingCommunication, setSavingCommunication] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -119,6 +147,7 @@ export default function App() {
 
   useEffect(() => {
     loadItems()
+    loadCommunicationSummary()
   }, [])
 
   useEffect(() => {
@@ -180,6 +209,20 @@ export default function App() {
     }
 
     setCommunications(data ?? [])
+  }
+
+  async function loadCommunicationSummary() {
+    const { data, error } = await supabase
+      .from('quote_communications')
+      .select('id, quote_request_id, occurred_at, channel, actor, next_step, next_step_date')
+      .order('occurred_at', { ascending: false })
+
+    if (error) {
+      setMessage(error.message)
+      return
+    }
+
+    setCommunicationSummaryByQuote(buildCommunicationSummary(data ?? []))
   }
 
   function normalizeDraft(item) {
@@ -411,6 +454,7 @@ export default function App() {
     setCommunicationDraft(emptyCommunicationDraft())
     setSavingCommunication(false)
     setMessage('Communicatie opgeslagen.')
+    loadCommunicationSummary()
   }
 
   async function deleteCommunication(communicationId) {
@@ -425,6 +469,7 @@ export default function App() {
 
     setCommunications((current) => current.filter((item) => item.id !== communicationId))
     setMessage('Communicatie verwijderd.')
+    loadCommunicationSummary()
   }
 
   const filteredItems = items.filter((item) => {
@@ -672,30 +717,42 @@ export default function App() {
               <div className="empty-state overview-empty">Geen offertes binnen deze selectie.</div>
             ) : null}
             {overviewItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={`overview-card ${getUrgency(item)} ${selectedId === item.id ? 'selected' : ''}`}
-                onClick={() => selectItem(item)}
-              >
-                <div className="overview-card-top">
-                  <strong>{item.company_name}</strong>
-                  <span className={`status-pill status-${item.status}`}>{getStatusLabel(item.status)}</span>
-                </div>
-                <div className="overview-amount">{formatCurrency(item.quote_amount)}</div>
-                <div className="overview-meta">
-                  <span>{item.contact_name || 'Geen contact'}</span>
-                  <span>{item.request_type || 'Geen type'}</span>
-                  <span>{item.request_source || 'Geen bron'}</span>
-                </div>
-                <div className="overview-copy">
-                  {item.next_action || item.quote_text || item.notes || 'Nog geen verdere inhoud toegevoegd.'}
-                </div>
-                <div className="overview-footer">
-                  <span>{item.next_action || 'Geen actie gepland'}</span>
-                  <span>Opvolgen {formatDate(item.follow_up_date)}</span>
-                </div>
-              </button>
+              (() => {
+                const communicationSummary = communicationSummaryByQuote[item.id]
+                const latestCommunication = communicationSummary?.latest
+
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`overview-card ${getUrgency(item)} ${selectedId === item.id ? 'selected' : ''}`}
+                    onClick={() => selectItem(item)}
+                  >
+                    <div className="overview-card-top">
+                      <strong>{item.company_name}</strong>
+                      <span className={`status-pill status-${item.status}`}>{getStatusLabel(item.status)}</span>
+                    </div>
+                    <div className="overview-amount">{formatCurrency(item.quote_amount)}</div>
+                    <div className="overview-meta">
+                      <span>{item.contact_name || 'Geen contact'}</span>
+                      <span>{item.request_type || 'Geen type'}</span>
+                      <span>{item.request_source || 'Geen bron'}</span>
+                    </div>
+                    <div className="overview-copy">
+                      {item.next_action || item.quote_text || item.notes || 'Nog geen verdere inhoud toegevoegd.'}
+                    </div>
+                    <div className="overview-communication">
+                      <span>Contactmomenten {communicationSummary?.count || 0}</span>
+                      <span>{latestCommunication ? `Laatste ${latestCommunication.channel} · ${latestCommunication.actor}` : 'Nog geen contact'}</span>
+                      <span>{formatDaysSince(latestCommunication?.occurred_at)}</span>
+                    </div>
+                    <div className="overview-footer">
+                      <span>{item.next_action || 'Geen actie gepland'}</span>
+                      <span>Opvolgen {formatDate(item.follow_up_date)}</span>
+                    </div>
+                  </button>
+                )
+              })()
             ))}
             </section>
           </>
