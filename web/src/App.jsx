@@ -85,6 +85,11 @@ export default function App() {
   const [selectedId, setSelectedId] = useState(null)
   const [draft, setDraft] = useState(emptyDraft())
   const [viewMode, setViewMode] = useState('overview')
+  const [overviewFilters, setOverviewFilters] = useState({
+    rest: true,
+    gewonnen: true,
+    verloren: true,
+  })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
@@ -315,7 +320,13 @@ export default function App() {
     return matchesSearch && matchesStatus
   })
 
-  const overviewItems = [...filteredItems].sort((left, right) => {
+  const overviewFilteredItems = filteredItems.filter((item) => {
+    if (item.status === 'gewonnen') return overviewFilters.gewonnen
+    if (item.status === 'verloren') return overviewFilters.verloren
+    return overviewFilters.rest
+  })
+
+  const overviewItems = [...overviewFilteredItems].sort((left, right) => {
     const leftOpen = isOpenStatus(left.status)
     const rightOpen = isOpenStatus(right.status)
 
@@ -346,6 +357,13 @@ export default function App() {
   const amountFollowUp = sumQuoteAmounts(items.filter((item) => item.status === 'opvolgen'))
   const amountWon = sumQuoteAmounts(wonItems)
   const amountLost = sumQuoteAmounts(lostItems)
+
+  function toggleOverviewFilter(key) {
+    setOverviewFilters((current) => ({
+      ...current,
+      [key]: !current[key],
+    }))
+  }
 
   return (
     <div className="suite-shell">
@@ -485,7 +503,34 @@ export default function App() {
         </section>
 
         {viewMode === 'overview' ? (
-          <section className="overview-grid">
+          <>
+            <section className="overview-filters">
+              <button
+                type="button"
+                className={`overview-filter-button ${overviewFilters.rest ? 'active rest' : ''}`}
+                onClick={() => toggleOverviewFilter('rest')}
+              >
+                Rest
+              </button>
+              <button
+                type="button"
+                className={`overview-filter-button ${overviewFilters.gewonnen ? 'active gewonnen' : ''}`}
+                onClick={() => toggleOverviewFilter('gewonnen')}
+              >
+                Gewonnen
+              </button>
+              <button
+                type="button"
+                className={`overview-filter-button ${overviewFilters.verloren ? 'active verloren' : ''}`}
+                onClick={() => toggleOverviewFilter('verloren')}
+              >
+                Verloren
+              </button>
+            </section>
+            <section className="overview-grid">
+            {overviewItems.length === 0 ? (
+              <div className="empty-state overview-empty">Geen offertes binnen deze selectie.</div>
+            ) : null}
             {overviewItems.map((item) => (
               <button
                 key={item.id}
@@ -512,7 +557,8 @@ export default function App() {
                 </div>
               </button>
             ))}
-          </section>
+            </section>
+          </>
         ) : (
         <div className="form-grid">
           <section className="panel">
