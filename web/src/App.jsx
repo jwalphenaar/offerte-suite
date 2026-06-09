@@ -38,6 +38,22 @@ const emptyDraft = () => ({
   notes: '',
 })
 
+function currentDateTimeLocal() {
+  const now = new Date()
+  const offset = now.getTimezoneOffset()
+  const local = new Date(now.getTime() - offset * 60000)
+  return local.toISOString().slice(0, 16)
+}
+
+const emptyCommunicationDraft = () => ({
+  occurred_at: currentDateTimeLocal(),
+  channel: '',
+  actor: 'ik',
+  summary: '',
+  next_step: '',
+  next_step_date: '',
+})
+
 function formatDate(value, options = {}) {
   if (!value) return '—'
   const date = new Date(value)
@@ -95,6 +111,9 @@ export default function App() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('alles')
   const [gmailEvents, setGmailEvents] = useState([])
+  const [communications, setCommunications] = useState([])
+  const [communicationDraft, setCommunicationDraft] = useState(emptyCommunicationDraft())
+  const [savingCommunication, setSavingCommunication] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -105,9 +124,11 @@ export default function App() {
   useEffect(() => {
     if (!selectedId) {
       setGmailEvents([])
+      setCommunications([])
       return
     }
     loadGmailEvents(selectedId)
+    loadCommunications(selectedId)
   }, [selectedId])
 
   async function loadItems() {
@@ -146,6 +167,21 @@ export default function App() {
     setGmailEvents(data ?? [])
   }
 
+  async function loadCommunications(quoteRequestId) {
+    const { data, error } = await supabase
+      .from('quote_communications')
+      .select('*')
+      .eq('quote_request_id', quoteRequestId)
+      .order('occurred_at', { ascending: false })
+
+    if (error) {
+      setMessage(error.message)
+      return
+    }
+
+    setCommunications(data ?? [])
+  }
+
   function normalizeDraft(item) {
     return {
       ...emptyDraft(),
@@ -171,6 +207,8 @@ export default function App() {
     setDraft(emptyDraft())
     setViewMode('dossier')
     setGmailEvents([])
+    setCommunications([])
+    setCommunicationDraft(emptyCommunicationDraft())
     setMessage('')
   }
 
@@ -302,6 +340,91 @@ export default function App() {
     setDraft(nextDraft)
     setUploading(false)
     setMessage('Document geupload. Klik nog op opslaan om de koppeling vast te leggen.')
+  }
+
+  async function saveCommunication() {
+    if (!selectedId) {
+      setMessage('Sla de offerte eerst op voordat je communicatie toevoegt.')
+      return
+    }
+
+    if (!communicationDraft.channel.trim()) {
+      setMessage('Vorm van communicatie is verplicht.')
+      return
+    }
+
+    if (!communicationDraft.summary.trim()) {
+      setMessage('Inhoud of samenvatting is verplicht.')
+      return
+    }
+
+    setSavingCommunication(true)
+    setMessage('')
+
+    const payload = {
+      quote_request_id: selectedId,
+      occurred_at: communicationDraft.occurred_at || null,
+      channel: communicationDraft.channel.trim(),
+      actor: communicationDraft.actor,
+      summary: communicationDraft.summary.trim(),
+      next_step: communicationDraft.next_step.trim(),
+      next_step_date: communicationDraft.next_step_date || null,
+    }
+
+    const { data, error } = await supabase
+      .from('quote_communications')
+      .insert(payload)
+      .select()
+      .single()
+
+    if (error) {
+      setMessage(error.message)
+      setSavingCommunication(false)
+      return
+    }
+
+    setCommunications((current) => [data, ...current])
+
+    if (payload.next_step || payload.next_step_date) {
+      const quotePatch = {
+        next_action: payload.next_step || draft.next_action,
+        follow_up_date: payload.next_step_date || draft.follow_up_date || null,
+      }
+
+      const { data: updatedQuote, error: quoteError } = await supabase
+        .from('quote_requests')
+        .update(quotePatch)
+        .eq('id', selectedId)
+        .select()
+        .single()
+
+      if (!quoteError && updatedQuote) {
+        setDraft(normalizeDraft(updatedQuote))
+        setItems((current) =>
+          current
+            .map((item) => (item.id === updatedQuote.id ? updatedQuote : item))
+            .sort((left, right) => new Date(right.updated_at) - new Date(left.updated_at)),
+        )
+      }
+    }
+
+    setCommunicationDraft(emptyCommunicationDraft())
+    setSavingCommunication(false)
+    setMessage('Communicatie opgeslagen.')
+  }
+
+  async function deleteCommunication(communicationId) {
+    const confirmed = window.confirm('Deze communicatie-entry verwijderen?')
+    if (!confirmed) return
+
+    const { error } = await supabase.from('quote_communications').delete().eq('id', communicationId)
+    if (error) {
+      setMessage(error.message)
+      return
+    }
+
+    setCommunications((current) => current.filter((item) => item.id !== communicationId))
+    setMessage('Communicatie verwijderd.')
   }
 
   const filteredItems = items.filter((item) => {
@@ -825,6 +948,104 @@ export default function App() {
                     <strong>{event.sender_name || event.sender_email || 'Onbekende afzender'}</strong>
                     <span>{formatDate(event.received_at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                     <p>{event.subject || event.snippet || 'Geen onderwerp'}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="panel span-2">
+            <div className="panel-title">Communicatie rondom offerte</div>
+            <div className="double-grid">
+              <label className="field-group">
+                <span>Datum en tijd</span>
+                <input
+                  type="datetime-local"
+                  className="field"
+                  value={communicationDraft.occurred_at}
+                  onChange={(event) => setCommunicationDraft({ ...communicationDraft, occurred_at: event.target.value })}
+                />
+              </label>
+              <label className="field-group">
+                <span>Vorm</span>
+                <input
+                  className="field"
+                  placeholder="Belletje, mailtje, appje, LinkedIn DM..."
+                  value={communicationDraft.channel}
+                  onChange={(event) => setCommunicationDraft({ ...communicationDraft, channel: event.target.value })}
+                />
+              </label>
+            </div>
+            <div className="double-grid">
+              <label className="field-group">
+                <span>Wie</span>
+                <select
+                  className="field"
+                  value={communicationDraft.actor}
+                  onChange={(event) => setCommunicationDraft({ ...communicationDraft, actor: event.target.value })}
+                >
+                  <option value="ik">Ik</option>
+                  <option value="klant">Klant</option>
+                </select>
+              </label>
+              <label className="field-group">
+                <span>Vervolgdatum</span>
+                <input
+                  type="date"
+                  className="field"
+                  value={communicationDraft.next_step_date}
+                  onChange={(event) => setCommunicationDraft({ ...communicationDraft, next_step_date: event.target.value })}
+                />
+              </label>
+            </div>
+            <label className="field-group">
+              <span>Inhoud</span>
+              <textarea
+                className="field textarea compact"
+                placeholder="Wat is er gezegd, gevraagd of afgesproken?"
+                value={communicationDraft.summary}
+                onChange={(event) => setCommunicationDraft({ ...communicationDraft, summary: event.target.value })}
+              />
+            </label>
+            <label className="field-group">
+              <span>Vervolgstap</span>
+              <input
+                className="field"
+                placeholder="Terugbellen, reminder sturen, demo plannen..."
+                value={communicationDraft.next_step}
+                onChange={(event) => setCommunicationDraft({ ...communicationDraft, next_step: event.target.value })}
+              />
+            </label>
+            <div className="communication-actions">
+              <button className="primary-button" type="button" onClick={saveCommunication} disabled={savingCommunication}>
+                {savingCommunication ? 'Opslaan...' : 'Communicatie toevoegen'}
+              </button>
+            </div>
+            <div className="communication-list">
+              {communications.length === 0 ? (
+                <div className="empty-inline">Nog geen communicatie gelogd.</div>
+              ) : (
+                communications.map((entry) => (
+                  <div key={entry.id} className="communication-card">
+                    <div className="communication-card-top">
+                      <strong>{entry.channel}</strong>
+                      <span>{formatDate(entry.occurred_at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div className="communication-card-meta">
+                      <span className={`status-pill ${entry.actor === 'klant' ? 'status-verloren' : 'status-intake'}`}>
+                        {entry.actor === 'klant' ? 'Klant' : 'Ik'}
+                      </span>
+                      {entry.next_step ? <span>Volgende stap: {entry.next_step}</span> : null}
+                      {entry.next_step_date ? <span>Op {formatDate(entry.next_step_date)}</span> : null}
+                    </div>
+                    <p>{entry.summary}</p>
+                    <button
+                      className="ghost-button compact-button"
+                      type="button"
+                      onClick={() => deleteCommunication(entry.id)}
+                    >
+                      Verwijderen
+                    </button>
                   </div>
                 ))
               )}

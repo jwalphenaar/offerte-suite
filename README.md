@@ -17,6 +17,7 @@ Zelfstandige offerte-app voor je eigen aanvragen, los van de bestaande codebase.
 - Statusflow voor nieuw, call, offerte verstuurd, wachten op klant, opvolgen, gewonnen, verloren
 - Follow-up datum en dashboard met openstaande acties
 - Offertetekst en transcriptie opslaan
+- Communicatie loggen per offerte: mail, belletje, appje, DM en vervolgacties
 - Document uploaden naar Supabase Storage
 - Gmail thread-url en reply-events registreren
 

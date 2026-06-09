@@ -46,6 +46,18 @@ create table if not exists public.gmail_events (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.quote_communications (
+  id uuid primary key default gen_random_uuid(),
+  quote_request_id uuid not null references public.quote_requests(id) on delete cascade,
+  occurred_at timestamptz not null default now(),
+  channel text not null,
+  actor text not null default 'ik',
+  summary text not null,
+  next_step text,
+  next_step_date date,
+  created_at timestamptz not null default now()
+);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -68,6 +80,7 @@ on conflict (id) do nothing;
 
 alter table public.quote_requests enable row level security;
 alter table public.gmail_events enable row level security;
+alter table public.quote_communications enable row level security;
 
 drop policy if exists "quote requests open access" on public.quote_requests;
 create policy "quote requests open access"
@@ -79,6 +92,13 @@ with check (true);
 drop policy if exists "gmail events open access" on public.gmail_events;
 create policy "gmail events open access"
 on public.gmail_events
+for all
+using (true)
+with check (true);
+
+drop policy if exists "quote communications open access" on public.quote_communications;
+create policy "quote communications open access"
+on public.quote_communications
 for all
 using (true)
 with check (true);
