@@ -328,6 +328,12 @@
   cursor: pointer;
 }
 
+.overview-filter-button.all.active {
+  background: linear-gradient(135deg, #d06a32, #b44e28);
+  color: #fff8f2;
+  border-color: rgba(180, 78, 40, 0.24);
+}
+
 .overview-filter-button.active.rest {
   background: #fff2e5;
   color: #b8672e;

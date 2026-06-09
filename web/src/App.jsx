@@ -365,6 +365,14 @@ export default function App() {
     }))
   }
 
+  function enableAllOverviewFilters() {
+    setOverviewFilters({
+      rest: true,
+      gewonnen: true,
+      verloren: true,
+    })
+  }
+
   return (
     <div className="suite-shell">
       <aside className="suite-sidebar">
@@ -485,19 +493,19 @@ export default function App() {
 
         <section className="amount-dashboard">
           <div className="amount-card">
-            <span>Open bedrag</span>
+            <span>Open bedrag · {openItems.length}</span>
             <strong>{formatCurrency(amountOpen)}</strong>
           </div>
           <div className="amount-card warn">
-            <span>Opvolgen bedrag</span>
+            <span>Opvolgen bedrag · {followUpItems.length}</span>
             <strong>{formatCurrency(amountFollowUp)}</strong>
           </div>
           <div className="amount-card success">
-            <span>Gewonnen bedrag</span>
+            <span>Gewonnen bedrag · {wonItems.length}</span>
             <strong>{formatCurrency(amountWon)}</strong>
           </div>
           <div className="amount-card muted">
-            <span>Verloren bedrag</span>
+            <span>Verloren bedrag · {lostItems.length}</span>
             <strong>{formatCurrency(amountLost)}</strong>
           </div>
         </section>
@@ -505,6 +513,15 @@ export default function App() {
         {viewMode === 'overview' ? (
           <>
             <section className="overview-filters">
+              <button
+                type="button"
+                className={`overview-filter-button all ${
+                  overviewFilters.rest && overviewFilters.gewonnen && overviewFilters.verloren ? 'active' : ''
+                }`}
+                onClick={enableAllOverviewFilters}
+              >
+                Alle
+              </button>
               <button
                 type="button"
                 className={`overview-filter-button ${overviewFilters.rest ? 'active rest' : ''}`}
