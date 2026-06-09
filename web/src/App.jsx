@@ -123,6 +123,18 @@ function formatDaysSince(value) {
   return `${diffDays} dagen stil`
 }
 
+function getSilenceLevel(value) {
+  if (!value) return 'stale'
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const date = new Date(value)
+  date.setHours(0, 0, 0, 0)
+  const diffDays = Math.max(0, Math.round((today - date) / 86400000))
+  if (diffDays >= 14) return 'stale'
+  if (diffDays >= 7) return 'aging'
+  return 'fresh'
+}
+
 export default function App() {
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState(null)
@@ -720,12 +732,15 @@ export default function App() {
               (() => {
                 const communicationSummary = communicationSummaryByQuote[item.id]
                 const latestCommunication = communicationSummary?.latest
+                const silenceLevel = isOpenStatus(item.status) ? getSilenceLevel(latestCommunication?.occurred_at) : 'fresh'
 
                 return (
                   <button
                     key={item.id}
                     type="button"
-                    className={`overview-card ${getUrgency(item)} ${selectedId === item.id ? 'selected' : ''}`}
+                    className={`overview-card status-card-${item.status} ${getUrgency(item)} ${silenceLevel} ${
+                      selectedId === item.id ? 'selected' : ''
+                    }`}
                     onClick={() => selectItem(item)}
                   >
                     <div className="overview-card-top">
